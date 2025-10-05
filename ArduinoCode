@@ -1,66 +1,76 @@
-#include "DHT.h"
-
-// Pin configuration
-#define DHTPIN 27              // DHT11 sensor data pin
-#define DHTTYPE DHT11          // Sensor type
-#define SOIL_MOISTURE_PIN 35   // Soil moisture sensor pin
-#define GAS_SENSOR_PIN 34      // MQ2 gas sensor pin
-#define RELAY_PIN 25           // Relay for water pump
-#define SPEAKER_PIN 26         // Speaker output pin (optional)
-
-DHT dht(DHTPIN, DHTTYPE);
-int soilThreshold = 300;       // Set your soil moisture threshold
-
-void setup() {
-  Serial.begin(115200);
-  dht.begin();
-  pinMode(RELAY_PIN, OUTPUT);
-  pinMode(SPEAKER_PIN, OUTPUT);
-  Serial.println("🌿 Talking Plant System Initialized 🌿");
-}
-
-void loop() {
-  // Read all sensors
-  float humidity = dht.readHumidity();
-  float temperature = dht.readTemperature();
-  int soilValue = analogRead(SOIL_MOISTURE_PIN);
-  int gasValue = analogRead(GAS_SENSOR_PIN);
-
-  Serial.println("\n===============================");
-  Serial.println("Plant Health Report");
-  Serial.println("===============================");
-  Serial.print("Temperature: "); Serial.print(temperature); Serial.println(" °C");
-  Serial.print("Humidity: "); Serial.print(humidity); Serial.println(" %");
-  Serial.print("Soil Moisture: "); Serial.println(soilValue);
-  Serial.print("Gas Sensor: "); Serial.println(gasValue);
-  Serial.println("===============================\n");
-
-  // Analyze plant conditions
-  checkSoil(soilValue);
-  checkGas(gasValue);
-  delay(5000); // Wait 5 seconds before next reading
-}
-
-// Function to check soil condition
-void checkSoil(int soilValue) {
-  if (soilValue < soilThreshold) {
-    Serial.println("🪴 Plant is thirsty! Watering now...");
-    digitalWrite(RELAY_PIN, HIGH); // Turn on pump
-    tone(SPEAKER_PIN, 1000, 500);  // Sound alert
-    delay(3000);
-    digitalWrite(RELAY_PIN, LOW);  // Turn off pump
-    Serial.println("✅ Watering complete!");
-  } else {
-    Serial.println("💧 Soil moisture is good.");
-  }
-}
-
-// Function to check gas/smoke level
-void checkGas(int gasValue) {
-  if (gasValue > 1000) {
-    Serial.println("⚠️ Warning: Harmful gas detected!");
-    tone(SPEAKER_PIN, 1500, 1000); // Audio alert
-  } else {
-    Serial.println("🌬️ Air quality is safe.");
-  }
-}
+#include "DHT.h" 
+#define Gas_analog  34    // used for ESP32 
+#define DHTPIN 27  
+# define sensorPin 35  
+int trigger = 300; // set the level 
+// 
+#define DHTTYPE DHT11   // DHT 21 (AM2301) 
+DHT dht(DHTPIN, DHTTYPE); 
+void setup() { 
+  Serial.begin(115200); 
+  dht.begin(); 
+} 
+void loop() { 
+gas(); 
+dht11(); 
+soilmoisture(); 
+} 
+void gas() 
+{ 
+  Serial.print("\n"); 
+  Serial.print("-------------------GAS SENSOR DATA------------------
+"); 
+  Serial.print("\n"); 
+  int gassensorAnalog = analogRead(Gas_analog); 
+  Serial.print("Gas Sensor: "); 
+  Serial.print(gassensorAnalog); 
+  Serial.print("\t"); 
+  if (gassensorAnalog > 1000) { 
+    Serial.println("Gas"); 
+  } 
+  else { 
+    Serial.println("No Gas"); 
+  } 
+  delay(100); 
+  Serial.print("\n"); 
+  Serial.print("--------------------------------------"); 
+} 
+void dht11(){ 
+  Serial.print("\n"); 
+  Serial.print("-------------------DHT11 SENSOR DATA-------------------"); 
+  Serial.print("\n"); 
+  float h = dht.readHumidity(); 
+  float t = dht.readTemperature(); 
+  // Check if any reads failed and exit early (to try again). 
+  if (isnan(h) || isnan(t)) { 
+    Serial.println(F("Failed to read from DHT sensor!")); 
+    return; 
+  } 
+  Serial.print(F("Humidity: ")); 
+  Serial.print(h); 
+  Serial.print(F("%  Temperature: ")); 
+  Serial.print(t); 
+  Serial.print(F("°C ")); 
+  Serial.print("\n"); 
+  Serial.print("--------------------------------------"); 
+} 
+void soilmoisture() 
+{ 
+Serial.print("\n"); 
+Serial.print("-------------------SOIL SENSOR DATA------------------
+"); 
+Serial.print("\n"); 
+Serial.print("Moisture Sensor Value:"); 
+Serial.print(analogRead(sensorPin)); // read the value from the sensor 
+if (analogRead(sensorPin) == trigger)  
+{ 
+    Serial.print("  Wet"); 
+} 
+else 
+{ 
+    Serial.print("  Dry"); 
+} 
+Serial.print("\n"); 
+Serial.print("--------------------------------------"); 
+delay(500); 
+} 
